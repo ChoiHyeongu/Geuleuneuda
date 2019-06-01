@@ -1,4 +1,4 @@
-package songpatechnicalhighschool.motivation.geuleuneuda;
+package songpatechnicalhighschool.motivation.geuleuneuda.Module;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothClass;

@@ -24,7 +24,7 @@ import java.util.ArrayList;
 
 import songpatechnicalhighschool.motivation.geuleuneuda.Adapter.DeviceListAdapter;
 import songpatechnicalhighschool.motivation.geuleuneuda.R;
-import songpatechnicalhighschool.motivation.geuleuneuda.SensorDevice;
+import songpatechnicalhighschool.motivation.geuleuneuda.Module.SensorDevice;
 
 public class ListFragment extends Fragment {
 
@@ -48,7 +48,7 @@ public class ListFragment extends Fragment {
         activity = getActivity();
 
         checkBluetoothPermissions();
-        doDiscoverable();
+        //doDiscoverable();
         Toast.makeText(activity, "doDiscover", Toast.LENGTH_SHORT).show();
         doDiscover();
 
@@ -59,8 +59,9 @@ public class ListFragment extends Fragment {
     public void onDestroy() {
         Log.d(TAG, "onDestroy: called.");
         super.onDestroy();
-        activity.unregisterReceiver(mBroadcastReceiver1);
-        activity.unregisterReceiver(mBroadcastReceiver2);
+        //activity.unregisterReceiver(mBroadcastReceiver1);
+        //activity.unregisterReceiver(mBroadcastReceiver2);
+        activity.unregisterReceiver(mBroadcastReceiver3);
         //mBluetoothAdapter.cancelDiscovery();
     }
 
@@ -141,11 +142,13 @@ public class ListFragment extends Fragment {
             if (action.equals(BluetoothDevice.ACTION_FOUND)) {
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 Log.d(TAG, "onReceive: " + device.getName() + ": " + device.getAddress());
-                SensorDevice sensorDevice = new SensorDevice(device, "subtitle");
-                sensorDevices.add(sensorDevice);
-                Log.d(TAG, "Sensor : " + sensorDevice.getDevice().getName());
-                deviceListAdapter = new DeviceListAdapter(context, R.layout.item_device, sensorDevices);
-                deviceListView.setAdapter(deviceListAdapter);
+                if(isOurDevice(device.getName())) {
+                    SensorDevice sensorDevice = new SensorDevice(device, "subtitle");
+                    sensorDevices.add(sensorDevice);
+                    Log.d(TAG, "Sensor : " + sensorDevice.getDevice().getName());
+                    deviceListAdapter = new DeviceListAdapter(context, R.layout.item_device, sensorDevices);
+                    deviceListView.setAdapter(deviceListAdapter);
+                }
             }
         }
     };
