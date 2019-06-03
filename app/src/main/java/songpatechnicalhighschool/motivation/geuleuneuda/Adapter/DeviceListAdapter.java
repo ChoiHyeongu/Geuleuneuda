@@ -11,7 +11,6 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 
-import songpatechnicalhighschool.motivation.geuleuneuda.Module.PairingRequest;
 import songpatechnicalhighschool.motivation.geuleuneuda.R;
 import songpatechnicalhighschool.motivation.geuleuneuda.Module.SensorDevice;
 
@@ -35,14 +34,6 @@ public class DeviceListAdapter extends ArrayAdapter<SensorDevice> {
         SensorDevice device = devices.get(position);
 
         if (device != null) {
-            LinearLayout layout = (LinearLayout) convertView.findViewById(R.id.list_layout);
-            layout.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    IntentFilter pairingFilter = new IntentFilter("android.bluetooth.device.action.PARING_REQUEST");
-                    getContext().registerReceiver(new PairingRequest(), pairingFilter);
-                }
-            });
             TextView deviceName = (TextView) convertView.findViewById(R.id.list_title);
             TextView deviceSubtitle = (TextView) convertView.findViewById(R.id.list_subtitle);
 

@@ -3,6 +3,7 @@ package songpatechnicalhighschool.motivation.geuleuneuda.Fragment;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
@@ -17,19 +18,24 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
 
 import songpatechnicalhighschool.motivation.geuleuneuda.Adapter.DeviceListAdapter;
+import songpatechnicalhighschool.motivation.geuleuneuda.MainActivity;
 import songpatechnicalhighschool.motivation.geuleuneuda.R;
 import songpatechnicalhighschool.motivation.geuleuneuda.Module.SensorDevice;
 
-public class ListFragment extends Fragment {
+import static android.bluetooth.BluetoothDevice.BOND_BONDED;
+
+public class ListFragment extends Fragment implements AdapterView.OnItemClickListener {
 
     private static final String TAG = "ListFragment";
 
+    private ProgressDialog progressDialog;
     private ArrayList<SensorDevice> sensorDevices;
     private RecyclerView deviceRecyclerView;
     public DeviceListAdapter deviceListAdapter;
@@ -42,10 +48,14 @@ public class ListFragment extends Fragment {
         View root = inflater.inflate(R.layout.fragment_list, container, false);
 
         deviceListView = root.findViewById(R.id.list_listview);
+        deviceListView.setOnItemClickListener(this);
 
         sensorDevices = new ArrayList<SensorDevice>();
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         activity = getActivity();
+
+        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
+        activity.registerReceiver(mBroadcastReceiver4, filter);
 
         checkBluetoothPermissions();
         //doDiscoverable();
@@ -62,7 +72,8 @@ public class ListFragment extends Fragment {
         //activity.unregisterReceiver(mBroadcastReceiver1);
         //activity.unregisterReceiver(mBroadcastReceiver2);
         activity.unregisterReceiver(mBroadcastReceiver3);
-        //mBluetoothAdapter.cancelDiscovery();
+        activity.unregisterReceiver(mBroadcastReceiver4);
+        bluetoothAdapter.cancelDiscovery();
     }
 
     // Create a BroadcastReceiver for ACTION_FOUND
@@ -142,7 +153,7 @@ public class ListFragment extends Fragment {
             if (action.equals(BluetoothDevice.ACTION_FOUND)) {
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 Log.d(TAG, "onReceive: " + device.getName() + ": " + device.getAddress());
-                if(isOurDevice(device.getName())) {
+                if (isOurDevice(device.getName())) {
                     SensorDevice sensorDevice = new SensorDevice(device, "subtitle");
                     sensorDevices.add(sensorDevice);
                     Log.d(TAG, "Sensor : " + sensorDevice.getDevice().getName());
@@ -152,6 +163,34 @@ public class ListFragment extends Fragment {
             }
         }
     };
+
+    private final BroadcastReceiver mBroadcastReceiver4 = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final String action = intent.getAction();
+
+            if (action.equals(BluetoothDevice.ACTION_BOND_STATE_CHANGED)) {
+                BluetoothDevice mDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                //3 cases:
+                //case1: bonded already
+                if (mDevice.getBondState() == BOND_BONDED) {
+                    Log.d(TAG, "BroadcastReceiver: BOND_BONDED.");
+                    hideProgress();
+                }
+                //case2: creating a bone
+                if (mDevice.getBondState() == BluetoothDevice.BOND_BONDING) {
+                    Log.d(TAG, "BroadcastReceiver: BOND_BONDING.");
+                    hideProgress();
+                }
+                //case3: breaking a bond
+                if (mDevice.getBondState() == BluetoothDevice.BOND_NONE) {
+                    Log.d(TAG, "BroadcastReceiver: BOND_NONE.");
+                    Toast.makeText(context, "연결을 실패했습니다.", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }
+    };
+
 
     boolean isOurDevice(String device) {
         if (device != null && device.length() >= 3) {
@@ -244,6 +283,43 @@ public class ListFragment extends Fragment {
             }
         } else {
             Log.d(TAG, "checkBluetoothPermissions: No need to check permissions. SDK version < LOLLIPOP.");
+        }
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+        //first cancel discovery because its very memory intensive.
+        bluetoothAdapter.cancelDiscovery();
+
+        Log.d(TAG, "onItemClick: You Clicked on a device.");
+        String deviceName = sensorDevices.get(i).getDevice().getName();
+        String deviceAddress = sensorDevices.get(i).getDevice().getAddress();
+
+        Log.d(TAG, "onItemClick: deviceName = " + deviceName);
+        Log.d(TAG, "onItemClick: deviceAddress = " + deviceAddress);
+
+        int isBonded = sensorDevices.get(i).getDevice().getBondState();
+        if (isBonded == BOND_BONDED) {
+            Toast.makeText(activity, "연결 되었습니다.", Toast.LENGTH_SHORT).show();
+        } else if (Build.VERSION.SDK_INT > Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            showProgress(deviceName.substring(4) + "와 연결 중 입니다.");
+            Log.d(TAG, "Trying to pair with " + deviceName);
+            sensorDevices.get(i).getDevice().createBond();
+        }
+    }
+
+    public void showProgress(String msg) {
+        if (progressDialog == null) {
+            progressDialog = new ProgressDialog(activity);
+            progressDialog.setCancelable(false);
+        }
+        progressDialog.setMessage(msg);
+        progressDialog.show();
+    }
+
+    public void hideProgress() {
+        if (progressDialog != null && progressDialog.isShowing()) {
+            progressDialog.dismiss();
         }
     }
 }
