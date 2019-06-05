@@ -10,8 +10,10 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -25,6 +27,7 @@ import android.widget.Toast;
 import java.util.ArrayList;
 
 import songpatechnicalhighschool.motivation.geuleuneuda.Adapter.DeviceListAdapter;
+import songpatechnicalhighschool.motivation.geuleuneuda.InduceActivity;
 import songpatechnicalhighschool.motivation.geuleuneuda.MainActivity;
 import songpatechnicalhighschool.motivation.geuleuneuda.R;
 import songpatechnicalhighschool.motivation.geuleuneuda.Module.SensorDevice;
@@ -38,6 +41,7 @@ public class ListFragment extends Fragment implements AdapterView.OnItemClickLis
     private ProgressDialog progressDialog;
     private ArrayList<SensorDevice> sensorDevices;
     private RecyclerView deviceRecyclerView;
+    private MediaPlayer mediaPlayer;
     public DeviceListAdapter deviceListAdapter;
     ListView deviceListView;
     private BluetoothAdapter bluetoothAdapter;
@@ -73,6 +77,8 @@ public class ListFragment extends Fragment implements AdapterView.OnItemClickLis
         //activity.unregisterReceiver(mBroadcastReceiver2);
         activity.unregisterReceiver(mBroadcastReceiver3);
         activity.unregisterReceiver(mBroadcastReceiver4);
+        mediaPlayer.stop();
+        mediaPlayer.release();
         bluetoothAdapter.cancelDiscovery();
     }
 
@@ -176,11 +182,13 @@ public class ListFragment extends Fragment implements AdapterView.OnItemClickLis
                 if (mDevice.getBondState() == BOND_BONDED) {
                     Log.d(TAG, "BroadcastReceiver: BOND_BONDED.");
                     hideProgress();
+                    startActivity(new Intent(getContext(), InduceActivity.class));
                 }
                 //case2: creating a bone
                 if (mDevice.getBondState() == BluetoothDevice.BOND_BONDING) {
                     Log.d(TAG, "BroadcastReceiver: BOND_BONDING.");
                     hideProgress();
+                    startActivity(new Intent(getContext(), InduceActivity.class));
                 }
                 //case3: breaking a bond
                 if (mDevice.getBondState() == BluetoothDevice.BOND_NONE) {
@@ -301,6 +309,7 @@ public class ListFragment extends Fragment implements AdapterView.OnItemClickLis
         int isBonded = sensorDevices.get(i).getDevice().getBondState();
         if (isBonded == BOND_BONDED) {
             Toast.makeText(activity, "연결 되었습니다.", Toast.LENGTH_SHORT).show();
+            startActivity(new Intent(getContext(), InduceActivity.class));
         } else if (Build.VERSION.SDK_INT > Build.VERSION_CODES.JELLY_BEAN_MR2) {
             showProgress(deviceName.substring(4) + "와 연결 중 입니다.");
             Log.d(TAG, "Trying to pair with " + deviceName);
